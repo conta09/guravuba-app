@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { Jost } from "next/font/google";
 import "./globals.css";
 
-// ✅ Load Google Font
+// ✅ Load Google Font without variable
 const jost = Jost({
   subsets: ["latin"],
-  variable: "--font-jost",
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -20,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${jost.variable} antialiased`}>
+      <body className={`${jost.className} antialiased`}>
         {children}
       </body>
     </html>
