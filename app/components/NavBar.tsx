@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { VscAccount } from "react-icons/vsc";
 import Auth from "./Auth";
+
 interface NavbarProps {
   isSeller?: boolean;
 }
@@ -12,10 +13,17 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ isSeller = false }) => {
   const router = useRouter();
   const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleLogout = () => {
+    setUser(null); // clear logged-in user
+    setDropdownOpen(false);
+  };
 
   return (
     <>
-      <nav className="flex items-center justify-between px-6 md:px-16 lg:px-32 py-3 border-b border-gray-300 text-gray-700">
+      <nav className="flex items-center justify-between px-6 md:px-16 lg:px-32 py-3 border-b border-gray-300 text-gray-700 relative">
         <Image
           className="cursor-pointer w-28 md:w-36"
           onClick={() => router.push("/")}
@@ -49,19 +57,41 @@ const Navbar: React.FC<NavbarProps> = ({ isSeller = false }) => {
           )}
         </div>
 
-        {/* Desktop Account button */}
-        <ul className="hidden md:flex items-center gap-4">
-          <button
-            onClick={() => setShowAuth(true)}
-            className="flex items-center gap-2 hover:text-gray-900 transition"
-          >
-            <VscAccount />
-            Account
-          </button>
+        {/* Desktop Account */}
+        <ul className="hidden md:flex items-center gap-4 relative">
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 hover:text-gray-900 transition"
+              >
+                <VscAccount /> Hi, {user.name}
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg p-2">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuth(true)}
+              className="flex items-center gap-2 hover:text-gray-900 transition"
+            >
+              <VscAccount />
+              Account
+            </button>
+          )}
         </ul>
 
         {/* Mobile view */}
-        <div className="flex items-center md:hidden gap-3">
+        <div className="flex items-center md:hidden gap-3 relative">
           {isSeller && (
             <button
               onClick={() => router.push("/seller")}
@@ -70,18 +100,47 @@ const Navbar: React.FC<NavbarProps> = ({ isSeller = false }) => {
               Seller Dashboard
             </button>
           )}
-          <button
-            onClick={() => setShowAuth(true)}
-            className="flex items-center gap-2 hover:text-gray-900 transition"
-          >
-            <VscAccount />
-            Account
-          </button>
+          {user ? (
+            <div className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 hover:text-gray-900 transition"
+              >
+                <VscAccount /> Hi, {user.name}
+              </button>
+
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border rounded-lg shadow-lg p-2">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 rounded-md hover:bg-gray-100"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowAuth(true)}
+              className="flex items-center gap-2 hover:text-gray-900 transition"
+            >
+              <VscAccount />
+              Account
+            </button>
+          )}
         </div>
       </nav>
 
       {/* Show Auth Modal */}
-      {showAuth && <Auth />}
+      {showAuth && (
+        <Auth
+          onLoginSuccess={(loggedInUser) => {
+            setUser(loggedInUser);
+            setShowAuth(false); // close modal
+          }}
+        />
+      )}
     </>
   );
 };
