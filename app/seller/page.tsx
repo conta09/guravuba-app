@@ -1,147 +1,188 @@
-'use client'
-import React, { useState, ChangeEvent, FormEvent } from "react";
+"use client";
+import React, { useState } from "react";
 import Image from "next/image";
 
-const AddProduct = () => {
-  const [files, setFiles] = useState<File[]>([]);
-  const [name, setName] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [category, setCategory] = useState<string>('Earphone');
-  const [price, setPrice] = useState<string>('');
-  const [offerPrice, setOfferPrice] = useState<string>('');
+export default function AddProduct() {
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [offerPrice, setOfferPrice] = useState("");
+  const [discount, setDiscount] = useState("");
+  const [category, setCategory] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([""]);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Handle form submission logic here
-    console.log({ files, name, description, category, price, offerPrice });
+  // URL validation helper
+  const isValidUrl = (str: string) => {
+    try {
+      new URL(str);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, index: number) => {
-    if (e.target.files && e.target.files[0]) {
-      const updatedFiles = [...files];
-      updatedFiles[index] = e.target.files[0];
-      setFiles(updatedFiles);
+  const handleImageChange = (index: number, value: string) => {
+    const updatedUrls = [...imageUrls];
+    updatedUrls[index] = value;
+    setImageUrls(updatedUrls);
+  };
+
+  const addImageField = () => setImageUrls([...imageUrls, ""]);
+  const removeImageField = (index: number) =>
+    setImageUrls(imageUrls.filter((_, i) => i !== index));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const productData = {
+      name,
+      description,
+      category,
+      price: Number(price),
+      offerPrice: offerPrice ? Number(offerPrice) : undefined,
+      discount: discount ? Number(discount) : undefined,
+      images: imageUrls.filter((url) => url.trim() !== ""), // only keep non-empty URLs
+    };
+
+    try {
+      const res = await fetch("/api/add-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productData),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+      alert("✅ Product added successfully!");
+
+      // Reset form
+      setName("");
+      setDescription("");
+      setCategory("");
+      setPrice("");
+      setOfferPrice("");
+      setDiscount("");
+      setImageUrls([""]);
+    } catch (err: any) {
+      alert("❌ Error: " + err.message);
     }
   };
 
   return (
-    <div className="flex-1 min-h-screen flex flex-col justify-between">
-      <form onSubmit={handleSubmit} className="md:p-10 p-4 space-y-5 max-w-lg">
-        <div>
-          <p className="text-base font-medium">Product Image</p>
-          <div className="flex flex-wrap items-center gap-3 mt-2">
-            {[...Array(4)].map((_, index) => (
-              <label key={index} htmlFor={`image${index}`} className="cursor-pointer">
-                <input
-                  onChange={(e) => handleFileChange(e, index)}
-                  type="file"
-                  id={`image${index}`}
-                  hidden
-                  accept="image/*"
-                />
-                <div className="w-24 h-24 border-2 border-dashed border-gray-300 rounded flex items-center justify-center bg-gray-100">
-                  {files[index] ? (
-                    <Image
-                      src={URL.createObjectURL(files[index])}
-                      alt={`Preview ${index + 1}`}
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover rounded"
-                    />
-                  ) : (
-                    <span className="text-gray-500 text-4xl">+</span>
-                  )}
-                </div>
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 max-w-md">
-          <label className="text-base font-medium" htmlFor="product-name">
-            Product Name
-          </label>
+    <div className="p-6 max-w-2xl mx-auto bg-white shadow-lg rounded-2xl">
+      <h2 className="text-2xl font-bold mb-6">Add New Product</h2>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        
+        <input
+          type="text"
+          placeholder="Product Name"
+          className="w-full p-3 border rounded-lg"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+
+        <textarea
+          placeholder="Description"
+          className="w-full p-3 border rounded-lg"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required
+        />
+
+        <select
+          className="w-full p-3 border rounded-lg"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          required
+        >
+          <option value="">Select Category</option>
+          <option value="Home & Kitchen">Home & Kitchen</option>
+          <option value="Kids & Toys">Kids & Toys</option>
+          <option value="Fashion & Accessories">Fashion & Accessories</option>
+          <option value="Lifestyle & Essentials">Lifestyle & Essentials</option>
+        </select>
+
+        <div className="grid grid-cols-2 gap-4">
           <input
-            id="product-name"
-            type="text"
-            placeholder="Type here"
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-            value={name}
+            type="number"
+            placeholder="Original Price"
+            className="w-full p-3 border rounded-lg"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
             required
           />
+          <input
+            type="number"
+            placeholder="Offer Price"
+            className="w-full p-3 border rounded-lg"
+            value={offerPrice}
+            onChange={(e) => setOfferPrice(e.target.value)}
+          />
         </div>
-        <div className="flex flex-col gap-1 max-w-md">
-          <label
-            className="text-base font-medium"
-            htmlFor="product-description"
+
+        <input
+          type="number"
+          placeholder="Discount (%)"
+          className="w-full p-3 border rounded-lg"
+          value={discount}
+          onChange={(e) => setDiscount(e.target.value)}
+        />
+
+        {/* Dynamic Image URL Inputs */}
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Product Images</h3>
+          {imageUrls.map((url, index) => (
+            <div key={index} className="mb-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={`Image URL ${index + 1}`}
+                  className="w-full p-2 border rounded-lg"
+                  value={url}
+                  onChange={(e) => handleImageChange(index, e.target.value)}
+                />
+                {imageUrls.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeImageField(index)}
+                    className="px-3 py-2 bg-red-500 text-white rounded-lg"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {isValidUrl(url) && (
+                <div className="mt-2">
+                  <Image
+                    src={url}
+                    alt={`Preview ${index + 1}`}
+                    width={120}
+                    height={120}
+                    className="rounded-lg object-cover"
+                    unoptimized // avoids Next.js domain issues
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addImageField}
+            className="mt-2 px-4 py-2 bg-gray-200 rounded-lg"
           >
-            Product Description
-          </label>
-          <textarea
-            id="product-description"
-            rows={4}
-            className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 resize-none"
-            placeholder="Type here"
-            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
-            value={description}
-            required
-          ></textarea>
+            + Add Image
+          </button>
         </div>
-        <div className="flex items-center gap-5 flex-wrap">
-          <div className="flex flex-col gap-1 w-32">
-            <label className="text-base font-medium" htmlFor="category">
-              Category
-            </label>
-            <select
-              id="category"
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-              onChange={(e: ChangeEvent<HTMLSelectElement>) => setCategory(e.target.value)}
-              value={category}
-            >
-              <option value="Earphone">Earphone</option>
-              <option value="Headphone">Headphone</option>
-              <option value="Watch">Watch</option>
-              <option value="Smartphone">Smartphone</option>
-              <option value="Laptop">Laptop</option>
-              <option value="Camera">Camera</option>
-              <option value="Accessories">Accessories</option>
-            </select>
-          </div>
-          <div className="flex flex-col gap-1 w-32">
-            <label className="text-base font-medium" htmlFor="product-price">
-              Product Price
-            </label>
-            <input
-              id="product-price"
-              type="number"
-              placeholder="0"
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
-              value={price}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-1 w-32">
-            <label className="text-base font-medium" htmlFor="offer-price">
-              Offer Price
-            </label>
-            <input
-              id="offer-price"
-              type="number"
-              placeholder="0"
-              className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40"
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setOfferPrice(e.target.value)}
-              value={offerPrice}
-              required
-            />
-          </div>
-        </div>
-        <button type="submit" className="px-8 py-2.5 bg-orange-600 text-white font-medium rounded">
-          ADD
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg font-medium transition"
+        >
+          Add Product
         </button>
       </form>
     </div>
   );
-};
-
-export default AddProduct;
+}
