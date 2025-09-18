@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import clientPromise from "@/lib/db";
+import clientPromise from "@/lib/db"; // your MongoDB connection
 
 export async function GET() {
   try {
@@ -7,16 +7,14 @@ export async function GET() {
     const db = client.db("testdb");
     const productsCollection = db.collection("products");
 
-    // find last 4 products (sorted by createdAt descending)
+    // Fetch only primaryImage, name, description
     const products = await productsCollection
-      .find({})
-      .sort({ createdAt: -1 })
-      .limit(4)
+      .find({}, { projection: { primaryImage: 1, name: 1, description: 1 } })
       .toArray();
 
     return NextResponse.json({ products }, { status: 200 });
   } catch (err) {
-    console.error("❌ Error fetching featured products:", err);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    console.error("❌ Fetch products error:", err);
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
 }

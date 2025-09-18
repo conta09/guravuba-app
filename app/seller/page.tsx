@@ -41,7 +41,7 @@ export default function AddProduct() {
       price: Number(price),
       offerPrice: offerPrice ? Number(offerPrice) : undefined,
       discount: discount ? Number(discount) : undefined,
-      images: imageUrls.filter((url) => url.trim() !== ""), // only keep non-empty URLs
+      images: imageUrls.filter((url) => url.trim() !== ""), // keep only non-empty URLs
     };
 
     try {
@@ -64,8 +64,14 @@ export default function AddProduct() {
       setOfferPrice("");
       setDiscount("");
       setImageUrls([""]);
-    } catch (err: any) {
-      alert("❌ Error: " + err.message);
+    } catch (err: unknown) {
+      let errorMessage = "Failed to add product";
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      alert("❌ Error: " + errorMessage);
     }
   };
 
@@ -73,7 +79,6 @@ export default function AddProduct() {
     <div className="p-6 max-w-2xl mx-auto bg-white shadow-lg rounded-2xl">
       <h2 className="text-2xl font-bold mb-6">Add New Product</h2>
       <form onSubmit={handleSubmit} className="space-y-5">
-        
         <input
           type="text"
           placeholder="Product Name"
@@ -132,18 +137,22 @@ export default function AddProduct() {
 
         {/* Dynamic Image URL Inputs */}
         <div>
-          <h3 className="text-lg font-semibold mb-2">Product Images</h3>
+          <h3 className="text-lg font-semibold mb-2">
+            Product Images{" "}
+            <span className="text-sm text-gray-500">(first = primary image)</span>
+          </h3>
           {imageUrls.map((url, index) => (
             <div key={index} className="mb-3">
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder={`Image URL ${index + 1}`}
+                  placeholder={index === 0 ? "Primary Image URL" : `Secondary Image URL ${index}`}
                   className="w-full p-2 border rounded-lg"
                   value={url}
                   onChange={(e) => handleImageChange(index, e.target.value)}
+                  required={index === 0} // enforce at least primary image
                 />
-                {imageUrls.length > 1 && (
+                {imageUrls.length > 1 && index > 0 && (
                   <button
                     type="button"
                     onClick={() => removeImageField(index)}
@@ -161,7 +170,7 @@ export default function AddProduct() {
                     width={120}
                     height={120}
                     className="rounded-lg object-cover"
-                    unoptimized // avoids Next.js domain issues
+                    unoptimized
                   />
                 </div>
               )}
@@ -172,7 +181,7 @@ export default function AddProduct() {
             onClick={addImageField}
             className="mt-2 px-4 py-2 bg-gray-200 rounded-lg"
           >
-            + Add Image
+            + Add Secondary Image
           </button>
         </div>
 

@@ -4,7 +4,8 @@ export interface IProduct extends Document {
   name: string;
   description: string;
   category: string;
-  images: string[]; // <-- simple array of image URLs
+  primaryImage: string;   // <-- first / main image
+  secondaryImages: string[]; // <-- other images
   price: number;
   offerPrice?: number;
   discount?: number;
@@ -24,11 +25,8 @@ const ProductSchema: Schema = new Schema(
       ],
       required: true,
     },
-    images: {
-      type: [String], // <-- array of strings
-      required: true,
-      validate: [(arr: string[]) => arr.length > 0, "At least one image required"],
-    },
+    primaryImage: { type: String, required: true },
+    secondaryImages: { type: [String], default: [] },
     price: { type: Number, required: true },
     offerPrice: { type: Number },
     discount: { type: Number },
